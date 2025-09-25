@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Whisp - The School Whisper Network</title>
+    <title>Whisp - Get Started</title>
     <style>
         * {
             margin: 0;
@@ -14,7 +14,6 @@
 
         :root {
             --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             --glass-bg: rgba(255, 255, 255, 0.1);
             --glass-border: rgba(255, 255, 255, 0.2);
             --text-light: #ffffff;
@@ -212,28 +211,6 @@
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
         }
 
-        .divider {
-            text-align: center;
-            margin: 30px 0;
-            color: #a0aec0;
-            position: relative;
-        }
-
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: #e2e8f0;
-        }
-
-        .divider span {
-            background: white;
-            padding: 0 20px;
-        }
-
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -245,13 +222,11 @@
             }
         }
 
-        /* Responsive */
         @media (max-width: 968px) {
             .container {
                 grid-template-columns: 1fr;
                 margin: 20px;
             }
-            
             .brand-section {
                 display: none;
             }
@@ -266,7 +241,6 @@
     </div>
 
     <div class="container">
-        <!-- Brand Section -->
         <div class="brand-section">
             <div class="logo">Whisp</div>
             <p class="tagline">The anonymous social network for your school. Share, connect, and be heard.</p>
@@ -279,14 +253,12 @@
             </ul>
         </div>
 
-        <!-- Auth Section -->
         <div class="auth-section">
             <div class="auth-tabs">
                 <div class="tab active" onclick="switchTab('login')">Login</div>
                 <div class="tab" onclick="switchTab('signup')">Sign Up</div>
             </div>
 
-            <!-- Login Form -->
             <form class="form active" id="loginForm">
                 <h2>Welcome Back</h2>
                 <div class="input-group">
@@ -300,7 +272,6 @@
                 <button type="submit" class="btn-primary">Sign In to Whisp</button>
             </form>
 
-            <!-- Signup Form -->
             <form class="form" id="signupForm">
                 <h2>Join Whisp</h2>
                 <div class="input-group">
@@ -322,7 +293,6 @@
                         <option value="male">Male</option>
                         <option value="female">Female</option>
                         <option value="other">Other</option>
-                        <option value="prefer-not-to-say">Prefer not to say</option>
                     </select>
                 </div>
                 <div class="input-group">
@@ -335,37 +305,122 @@
     </div>
 
     <script>
+        // Check if user is already logged in
+        if (localStorage.getItem('whispLoggedIn') === 'true') {
+            window.location.href = 'home.html';
+        }
+
         function switchTab(tabName) {
-            // Update tabs
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.form').forEach(form => form.classList.remove('active'));
-            
             event.target.classList.add('active');
             document.getElementById(tabName + 'Form').classList.add('active');
         }
 
-        // Form handling
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            // Add your login logic here
-            alert('Login functionality coming in phase 2!');
-        });
+        // Initialize access codes if not exists
+        if (!localStorage.getItem('whispAccessCodes')) {
+            const accessCodes = {
+                '1234567890': { used: false },
+                '0987654321': { used: false },
+                '1111111111': { used: false },
+                '2222222222': { used: false }
+            };
+            localStorage.setItem('whispAccessCodes', JSON.stringify(accessCodes));
+        }
 
+        // Initialize users if not exists
+        if (!localStorage.getItem('whispUsers')) {
+            localStorage.setItem('whispUsers', JSON.stringify({}));
+        }
+
+        // SIGNUP FORM
         document.getElementById('signupForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            // Add your signup logic here
-            alert('Signup functionality coming in phase 2!');
+            
+            const accessCode = document.getElementById('accessCode').value;
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const gender = document.getElementById('gender').value;
+            const password = document.getElementById('password').value;
+
+            // Get access codes from storage
+            const accessCodes = JSON.parse(localStorage.getItem('whispAccessCodes'));
+            
+            // Check if access code is valid
+            if (!accessCodes[accessCode]) {
+                alert('❌ Invalid access code');
+                return;
+            }
+
+            // Check if access code is already used
+            if (accessCodes[accessCode].used) {
+                alert('❌ Access code already used');
+                return;
+            }
+
+            // Get users from storage
+            const users = JSON.parse(localStorage.getItem('whispUsers'));
+
+            // Check if username already exists
+            if (users[username]) {
+                alert('❌ Username already taken');
+                return;
+            }
+
+            // Create new user
+            users[username] = {
+                email: email,
+                gender: gender,
+                password: password, // In real app, hash this!
+                accessCode: accessCode,
+                joinDate: new Date().toISOString(),
+                badge: 'Newbie'
+            };
+
+            // Mark access code as used
+            accessCodes[accessCode].used = true;
+
+            // Save to storage
+            localStorage.setItem('whispUsers', JSON.stringify(users));
+            localStorage.setItem('whispAccessCodes', JSON.stringify(accessCodes));
+            localStorage.setItem('whispCurrentUser', username);
+            localStorage.setItem('whispLoggedIn', 'true');
+
+            alert('✅ Account created successfully!');
+            window.location.href = 'home.html';
         });
 
-        // Add some interactive effects
-        document.querySelectorAll('input, select').forEach(element => {
-            element.addEventListener('focus', function() {
-                this.parentElement.style.transform = 'scale(1.02)';
-            });
+        // LOGIN FORM
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
             
-            element.addEventListener('blur', function() {
-                this.parentElement.style.transform = 'scale(1)';
-            });
+            const identifier = document.getElementById('loginIdentifier').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const users = JSON.parse(localStorage.getItem('whispUsers'));
+
+            // Find user by username or email
+            let user = null;
+            for (const [username, userData] of Object.entries(users)) {
+                if (username === identifier || userData.email === identifier) {
+                    user = { username, ...userData };
+                    break;
+                }
+            }
+
+            if (!user) {
+                alert('❌ User not found');
+                return;
+            }
+
+            if (user.password !== password) {
+                alert('❌ Incorrect password');
+                return;
+            }
+
+            localStorage.setItem('whispCurrentUser', user.username);
+            localStorage.setItem('whispLoggedIn', 'true');
+            window.location.href = 'home.html';
         });
     </script>
 </body>
